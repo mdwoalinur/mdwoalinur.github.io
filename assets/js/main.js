@@ -6,7 +6,7 @@ const CONTACT_FORM_ENDPOINT_PLACEHOLDER = "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE";
 document.addEventListener("DOMContentLoaded", () => {
   const navbar = document.querySelector("#siteNavbar");
   const navLinks = Array.from(document.querySelectorAll(".site-navbar .nav-link[href^='#']"));
-  const backToTop = document.querySelector(".back-to-top");
+  const scrollToggle = document.querySelector(".page-scroll-toggle");
   const currentYear = document.querySelector("#currentYear");
   const navbarCollapse = document.querySelector("#primaryNavbar");
   const contactForm = document.querySelector("#contactForm");
@@ -15,6 +15,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const prefersReducedMotion = motionQuery ? motionQuery.matches : false;
 
   const getHeaderOffset = () => (navbar ? navbar.offsetHeight + 10 : 0);
+
+  const getMaxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+  const updateScrollToggle = () => {
+    if (!scrollToggle) {
+      return;
+    }
+
+    const maxScroll = getMaxScroll();
+    const goUp = maxScroll > 0 && window.scrollY >= maxScroll / 2;
+    const label = goUp ? "Back to top" : "Go to bottom";
+    const icon = scrollToggle.querySelector("i");
+
+    scrollToggle.hidden = maxScroll === 0;
+    scrollToggle.dataset.direction = goUp ? "up" : "down";
+    scrollToggle.setAttribute("aria-label", label);
+    scrollToggle.setAttribute("title", label);
+    if (icon) {
+      icon.classList.toggle("bi-arrow-up", goUp);
+      icon.classList.toggle("bi-arrow-down", !goUp);
+    }
+  };
 
   const updateNavbarShadow = () => {
     if (!navbar) {
@@ -193,17 +215,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  if (backToTop) {
-    backToTop.addEventListener("click", () => {
-      const home = document.querySelector("#home");
-      if (home) {
-        scrollToTarget(home);
-      } else {
-        window.scrollTo({
-          top: 0,
-          behavior: prefersReducedMotion ? "auto" : "smooth"
-        });
-      }
+  if (scrollToggle) {
+    scrollToggle.addEventListener("click", () => {
+      window.scrollTo({
+        top: scrollToggle.dataset.direction === "up" ? 0 : getMaxScroll(),
+        behavior: prefersReducedMotion ? "auto" : "smooth"
+      });
     });
   }
 
@@ -217,9 +234,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateNavbarShadow();
   setActiveLink();
+  updateScrollToggle();
   window.addEventListener("scroll", updateNavbarShadow, { passive: true });
   window.addEventListener("scroll", setActiveLink, { passive: true });
   window.addEventListener("resize", setActiveLink);
+  window.addEventListener("scroll", updateScrollToggle, { passive: true });
+  window.addEventListener("resize", updateScrollToggle);
+  window.addEventListener("load", updateScrollToggle);
 
   console.info("Md. Woalinur Portfolio initialized - Phase 5");
 });
